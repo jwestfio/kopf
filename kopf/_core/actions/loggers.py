@@ -30,7 +30,7 @@ class LogFormat(enum.Enum):
     """ Log formats, as specified on CLI. """
     PLAIN = '%(message)s'
     FULL = '[%(asctime)s] %(name)-20.20s [%(levelname)-8.8s] %(message)s'
-    FULLCOLOR = '[%(asctime)s] %(name)-20.20s [%(levelname)-8.8s] %(message)s'
+    COLOR = '[%(asctime)s] %(name)-20.20s [%(levelname)-8.8s] %(message)s'
     JSON = enum.auto()
 
 
