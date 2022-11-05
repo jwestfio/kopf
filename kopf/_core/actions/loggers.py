@@ -25,12 +25,17 @@ logger = logging.getLogger('kopf.objects')
 # A key for object references in JSON logs, as seen by the log parsers.
 DEFAULT_JSON_REFKEY = 'object'
 
+COLOR_GREY = "\x1b[38;20m"
+COLOR_YELLOW = "\x1b[33;20m"
+COLOR_GREEN= "\x1b[32;20m"
+COLOR_RED = "\x1b[31;20m"
+COLOR_BOLD_RED = "\x1b[31;1m"
+COLOR_RESET = "\x1b[0m"
 
 class LogFormat(enum.Enum):
     """ Log formats, as specified on CLI. """
     PLAIN = '%(message)s'
     FULL = '[%(asctime)s] %(name)-20.20s [%(levelname)-8.8s] %(message)s'
-    COLOR = '[%(asctime)s] %(name)-20.20s [%(levelname)-8.8s] %(message)s'
     JSON = enum.auto()
 
 
@@ -39,7 +44,19 @@ class ObjectFormatter(logging.Formatter):
 
 
 class ObjectTextFormatter(ObjectFormatter, logging.Formatter):
-    pass
+    
+    def format(self, record):
+        if record.levelno == logging.DEBUG:
+            record.msg = f"{COLOR_GREEN}{record.msg}{COLOR_RESET}"
+        elif record.levelno == logging.INFO:
+            record.msg = f"{COLOR_GREY}{record.msg}{COLOR_RESET}"
+        elif record.levelno == logging.WARNING:
+            record.msg = f"{COLOR_YELLOW}{record.msg}{COLOR_RESET}"
+        elif record.levelno == logging.ERROR:
+            record.msg = f"{COLOR_RED}{record.msg}{COLOR_RESET}"
+        else:
+            record.msg = f"{COLOR_BOLD_RED}{record.msg}{COLOR_RESET}"
+        return super().format(record)
 
 
 class ObjectJsonFormatter(ObjectFormatter, pythonjsonlogger.jsonlogger.JsonFormatter):  # type: ignore
@@ -88,6 +105,7 @@ class ObjectPrefixingMixin(ObjectFormatter):
             prefix = f"[{namespace}/{name}]" if namespace else f"[{name}]"
             record = copy.copy(record)  # shallow
             record.msg = f"{prefix} {record.msg}"
+
         return super().format(record)
 
 
@@ -177,9 +195,10 @@ def configure(
         log_format: LogFormat = LogFormat.FULL,
         log_prefix: Optional[bool] = False,
         log_refkey: Optional[str] = None,
+        log_color: Optional[bool] = False,
 ) -> None:
     log_level = 'DEBUG' if debug or verbose else 'WARNING' if quiet else 'INFO'
-    formatter = make_formatter(log_format=log_format, log_prefix=log_prefix, log_refkey=log_refkey)
+    formatter = make_formatter(log_format=log_format, log_prefix=log_prefix, log_refkey=log_refkey, log_color=log_color)
     handler = logging.StreamHandler()
     handler.setFormatter(formatter)
     logger = logging.getLogger()
@@ -203,6 +222,7 @@ def make_formatter(
         log_format: LogFormat = LogFormat.FULL,
         log_prefix: Optional[bool] = False,
         log_refkey: Optional[str] = None,
+        log_color:  Optional[bool] = False
 ) -> ObjectFormatter:
     log_prefix = log_prefix if log_prefix is not None else bool(log_format is not LogFormat.JSON)
     if log_format is LogFormat.JSON:

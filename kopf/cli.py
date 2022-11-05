@@ -48,14 +48,16 @@ def logging_options(fn: Callable[..., Any]) -> Callable[..., Any]:
     @click.option('--log-format', type=LogFormatParamType(), default='full')
     @click.option('--log-refkey', type=str)
     @click.option('--log-prefix/--no-log-prefix', default=None)
+    @click.option('--log-color', type=bool, default=False)
     @functools.wraps(fn)  # to preserve other opts/args
     def wrapper(verbose: bool, quiet: bool, debug: bool,
                 log_format: loggers.LogFormat = loggers.LogFormat.FULL,
                 log_prefix: Optional[bool] = False,
                 log_refkey: Optional[str] = None,
+                log_color:  Optional[bool] = False,
                 *args: Any, **kwargs: Any) -> Any:
         loggers.configure(debug=debug, verbose=verbose, quiet=quiet,
-                          log_format=log_format, log_refkey=log_refkey, log_prefix=log_prefix)
+                          log_format=log_format, log_refkey=log_refkey, log_prefix=log_prefix, log_color=log_color)
         return fn(*args, **kwargs)
 
     return wrapper
